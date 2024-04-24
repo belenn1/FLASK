@@ -14,13 +14,16 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        verif_password = request.form['verif_password']
         db = get_db()
         error = None
 
         if not username:
-            error = 'Username is required.'
+            error = 'Se requiere nombre de usuario.'
         elif not password:
-            error = 'Password is required.'
+            error = 'Se requiere contraseña.'
+        elif verif_password != password:
+            error = 'error, no coincide la contraseña'
 
         if error is None:
             try:
