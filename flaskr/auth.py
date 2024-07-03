@@ -15,6 +15,7 @@ def register():
         username = request.form['username']
         password = request.form['password']
         verif_password = request.form['verif_password']
+        email = request.form['email']
         db = get_db()
         error = None
 
@@ -24,12 +25,14 @@ def register():
             error = 'Se requiere contraseña.'
         elif verif_password != password:
             error = 'error, no coincide la contraseña'
-
+        elif not email:
+            error = 'Se requiere email.'
+        
         if error is None:
             try:
                 db.execute(
-                    "INSERT INTO user (username, password) VALUES (?, ?)",
-                    (username, generate_password_hash(password)),
+                    "INSERT INTO user (username, password,verif_password, email) VALUES (?, ?, ?, ?)",
+                    (username, generate_password_hash(password),verif_password,email),
                 )
                 db.commit()
             except db.IntegrityError:
@@ -77,6 +80,7 @@ def load_logged_in_user():
             'SELECT * FROM user WHERE id = ?', (user_id,)
         ).fetchone()
 
+
 @bp.route('/logout')
 def logout():
     session.clear()
@@ -91,4 +95,28 @@ def login_required(view):
         return view(**kwargs)
 
     return wrapped_view
+
+@bp.route('/<int:id>/update', methods=('GET', 'POST'))
+@login_required
+def update(id):
+       if request.method == 'POST':
+        email = request.form['email']
+        error = None
+
+        if not email:
+            error = 'email requerido.'
+
+        if error is not None:
+            flash(error)
+        else:
+            db = get_db()
+            db.execute(
+                'UPDATE post SET title = ?'
+                ' WHERE id = ?',
+                (email, id)
+            )
+            db.commit()
+            return redirect(url_for('blog.index'))
+
+        return render_template('auth/editarusuario.html',email=email)
 
